@@ -6,4 +6,4 @@
 ## Tydzień 2:
   - dodaliśmy funkcję umożliwiającą zczytywanie oraz zapis poprzez SPI
   - zaczynamy prace nad inicjalizacją Pmodów z planem przesłania pierwszych informacji w przyszłym tygodniu
-
+  - zagłebialiśmy się w tematyce konfiguracji oraz działania magistrali CAN
