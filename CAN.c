@@ -98,11 +98,18 @@ void can_init(){
 }
 
 int main(){
+  DDRB |=(1<<PB5);
+  Serial.begin(31250);
 uint8_t read_data;
 spi_arduino_init();
 can_init();
-while(1){
-
+int arr[8];
+can_read(CNF2, arr, 8);
+_delay_ms(100);
+for(int i = 0; i<8; ++i){
+  if(arr[i]==1) PORTB |=(1<<PB5);
+  _delay_ms(1000);
+  PORTB &=~(1<<PB5);
 }
 
   return 0;
