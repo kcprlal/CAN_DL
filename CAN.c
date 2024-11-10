@@ -1,14 +1,19 @@
 #include<stdlib.h>
 #include<avr/io.h>
+#include<util/delay.h>
+
+#define CANCTRL 0x0f
+#define CNF1 0x2A
+#define CNF2 0x29
+#define CNF3 0x28
+#define RXB0CNTRL 0x60
 
 void spi_arduino_init()
 {
   //SPI CHIP SELECT
-  DDRD |=(1<<PD6);
-  DDRD |=(1<<PD7);
+  DDRB |=(1<<PB2);
   //tutaj zmiana z jakeigos powodu trzrba skontrolowac
-  PORTD |=(1<<PD6);
-  PORTD |=(1<<PD7);
+  PORTB |=(1<<PB2);
 //SPI MISO
   DDRB &=~(1<<PB4);
 //SPI MOSI 
@@ -33,23 +38,23 @@ void spi_arduino_init()
 }
 
 uint8_t SPI_transfer(uint8_t data) {
-	SPDR0 = data;
-	while (!(SPSR0 & (1 << SPIF)));
-	return SPDR0;
+	SPDR = data;
+	while (!(SPSR & (1 << SPIF)));
+	return SPDR;
 }
 //spraedzic czy slave wybierany jest za pomoca 0 czy 1?
 
 void can_write(uint8_t reg, uint8_t value){
-  PORTD &=~(1<<PD6);
+  PORTD &=~(1<<PB2);
   SPI_transfer(reg & ~0x80);
- _dealy_ms(10);
+ _delay_ms(10);
 	SPI_transfer(value);
- _dealy_ms(10);
-  PORTD |=(1<<PD6);
+ _delay_ms(10);
+  PORTD |=(1<<PB2);
 }
 
 void can_read(uint8_t reg, void *reg_data, uint8_t len){
-  PORTD &=~(1<<PD7);
+  PORTD &=~(1<<PB2);
   SPI_transfer(reg | 0x80);
 		while(len--)
 		{
@@ -57,14 +62,48 @@ void can_read(uint8_t reg, void *reg_data, uint8_t len){
 			(uint8_t*)reg_data++;
 		}
 
-  PORTD |=(1<<PD7);
+  PORTD |=(1<<PB2);
+}
+
+void can_standard(){
+  for(int i = 0; i<=0x0b; i++){
+    can_write(i, 0);
+  }
+  for(int i = 0x10; i<=0x1b; i++){
+    can_write(i, 0);
+  }
+  for(int i = 0x20; i<=0x27; i++){
+    can_write(i, 0);
+  }
+  for(int i = 0x30; i<=0x3D; i++){
+    can_write(i, 0);
+  }
+  for(int i = 0x40; i<=0x4d; i++){
+    can_write(i, 0);
+  }
+  for(int i = 0x50; i<=0x5d; i++){
+    can_write(i, 0);
+  }
+}
+
+void can_init(){
+  PORTB &= ~(1 << PB2);
+  can_write(CANCTRL, 0b10000000); //zrob 16
+  can_write(CNF1, 0x41); 
+  can_write(CNF2, 0xFB);
+  can_write(CNF3, 0x86);
+  can_standard();
+  can_write(RXB0CNTRL, 0x64);
+  can_write(CANCTRL, 0x00);
 }
 
 int main(){
 uint8_t read_data;
 spi_arduino_init();
+can_init();
+while(1){
 
-
+}
 
   return 0;
 }
