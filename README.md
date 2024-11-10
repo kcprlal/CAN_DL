@@ -8,3 +8,7 @@
   - dodaliśmy funkcję umożliwiającą zczytywanie oraz zapis poprzez SPI
   - zaczynamy prace nad inicjalizacją Pmodów z planem przesłania pierwszych informacji w przyszłym tygodniu
   - zagłębialiśmy się w tematyce konfiguracji oraz działania magistrali CAN
+## Tydzień 3:
+- napisaliśmy funkcje odpowiedzialne za inicjalizację rejestrów kontrolnych CAN
+- zmontowaliśmy układ składający się z dwóch płytek arduino i dwóch płytek pmod
+- zczytaliśmy pierwsze informacje za pomocą CAN (losowy ciąg zer i jedynek)
