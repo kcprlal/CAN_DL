@@ -52,7 +52,7 @@ void can_write(uint8_t reg, uint8_t value){
   PORTB |=(1<<PB2);
 }
 
-void can_read(uint8_t reg, void *reg_data, uint8_t len){
+void can_read(uint8_t reg, uint8_t *reg_data, uint8_t len){
   
   PORTB &=~(1<<PB2);
   SPI_transfer(0x03);
@@ -101,21 +101,53 @@ void can_init(){
   PORTB |=(1<<PB2);
 }
 
+void can_send(uint8_t id, uint8_t *data, uint8_t len){
+  can_write(0x31, (id>>3)); //SIDH
+  can_write(0x32, (id<<5));
+
+  for (uint8_t i = 0; i < len; i++) {
+        can_write(0x36 + i, data[i]); // Rejestry TXBnD0 do TXBnD7
+    }
+
+    // Ustaw długość danych
+    can_write(0x35, len); // Rejestr TXBnDLC
+
+    // Zainicjuj transmisję
+    can_write(0x30, 0x08); // TXREQ - Rozpocznij nadawanie
+}
+
+uint8_t can_receive(uint8_t *data, uint8_t *len) {
+    uint8_t status = 0;
+
+    // Sprawdź flagę RXnIF w CANINTF (np. RXB0IF dla bufora RXB0)
+    can_read(0x2C, &status, 1); // CANINTF
+    if (status & 0x01) {        // Sprawdź RXB0IF
+        // Odczytaj długość danych
+        can_read(0x65, len, 1); // RXBnDLC
+
+        // Odczytaj dane
+        for (uint8_t i = 0; i < *len; i++) {
+            can_read(0x66 + i, &data[i], 1); // RXBnD0 do RXBnD7
+        }
+
+        // Wyczyść flagę RXB0IF
+        can_write(0x2C, 0x00); // Wyczyszczenie CANINTF
+        return 1; // Wiadomość odebrana
+    }
+    return 0; // Brak wiadomości
+}
+
 int main(){
 
-DDRD |=(1<<PD2);
-PORTD &= ~(1 << PD2);
-
-uint8_t canctrl;
+uint8_t arr=4;
 spi_arduino_init();
 can_init();
-can_read(CANCTRL, &canctrl, 1);
-_delay_ms(100);
- if ((canctrl & 0xE0) == 0x00) { // 000 dla trybu normalnego
-        PORTD |= (1 << PD2);        // Ustawienie PD2 na wysoki
-    } else {
-        PORTD &= ~(1 << PD2);       // Ustawienie PD2 na niski
-    }
+while(1){
+  can_send(0x123, arr, 1);
+  _delay_ms(10000);
+  
+}
+
 
   return 0;
 }
