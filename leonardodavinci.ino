@@ -19,15 +19,15 @@ void spi_arduino_init()
 //jeśli nie to trzeba sprawdzić jak się dostać do icsp
 
 //wybor f zegara
-  SPCR &=(0<<SPR1);
+  SPCR &=~(1<<SPR1);
   SPCR |=(1<<SPR0);
 //polarity i faza zegara
-  SPCR &= (0<<CPOL);
-  SPCR &= (0<<CPHA);
+  SPCR &= ~(1<<CPOL);
+  SPCR &= ~(1<<CPHA);
 //master
   SPCR |=(1<<MSTR);
 //data order LSB
-  SPCR &=(0<<DORD);
+  SPCR &=~(1<<DORD);
 //spi enable
   SPCR |=(1<<SPE);
 //przerwania moze pozniej 
@@ -94,9 +94,60 @@ void can_init(){
   can_write(CANCTRL, 0x00);
   PORTB |=(1<<PB6);
 }
+void can_send(uint8_t id, uint8_t *data, uint8_t len){
+  can_write(0x31, (id>>3)); //SIDH
+  can_write(0x32, (id<<5));
+
+  for (uint8_t i = 0; i < len; i++) {
+        can_write(0x36 + i, data[i]); // Rejestry TXBnD0 do TXBnD7
+    }
+
+    // Ustaw długość danych
+    can_write(0x35, len); // Rejestr TXBnDLC
+
+    // Zainicjuj transmisję
+    can_write(0x30, 0x08); // TXREQ - Rozpocznij nadawanie
+}
+
+uint8_t can_receive(uint8_t *data, uint8_t *len) {
+    uint8_t status = 0;
+
+    // Sprawdź flagę RXnIF w CANINTF (np. RXB0IF dla bufora RXB0)
+    can_read(0x2C, &status, 1); // CANINTF
+    if (status & 0x01) {        // Sprawdź RXB0IF
+        // Odczytaj długość danych
+        can_read(0x65, len, 1); // RXBnDLC
+
+        // Odczytaj dane
+        for (uint8_t i = 0; i < *len; i++) {
+            can_read(0x66 + i, &data[i], 1); // RXBnD0 do RXBnD7
+        }
+
+        // Wyczyść flagę RXB0IF
+        can_write(0x2C, 0x00); // Wyczyszczenie CANINTF
+        return 1; // Wiadomość odebrana
+    }
+    return 0; // Brak wiadomości
+}
 int main(){
+DDRC |= (1 << PC7);
 spi_arduino_init();
 can_init();
+uint8_t data;
+  while(1)
+  {
+    can_receive(&data, 1);
+    _delay_ms(100);
+    if (data == 4)
+    {
+      PORTC |= (1<<PC7);
+    }
+    else 
+    {
+      PORTC &=~(1<<PC7);
+    }
+    
+  }
 
-  return 0;
+return 0;
 }
