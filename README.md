@@ -12,3 +12,6 @@
 - napisaliśmy funkcje odpowiedzialne za inicjalizację rejestrów kontrolnych CAN
 - zmontowaliśmy układ składający się z dwóch płytek arduino i dwóch płytek pmod
 - zczytaliśmy pierwsze informacje za pomocą CAN (losowy ciąg zer i jedynek)
+## Tydzień 4:
+- Pmody zostały zainicjalizowane i gotowe do działania
+- Niestetety napotkaliśmy problemy z wgrywaniem programów do mikrokontrolera Leonarda ;(
