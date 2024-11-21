@@ -11,11 +11,11 @@
 #define RTS_TXB0 0x81
 #define RTS_TXB1 0x82
 #define RTS_TXB2 0x84
-#define TXB0_ID_C  0x40  // Buffer 0 - Standard Identifier High Register
-#define TXB0_DATA_C  0x41  // Buffer 0 - Data Byte Register
-#define TXB1_ID_C  0x42  // Buffer 1 - Standard Identifier High Register
-#define TXB1_DATA_C  0x43  // Buffer 1 - Data Byte Register
-#define TXB2_ID_C  0x44  // Buffer 2 - Standard Identifier High Register
+#define TXB0_ID_C  0x40  // Standard Identifier High Register
+#define TXB0_DATA_C  0x41 
+#define TXB1_ID_C  0x42  // Standard Identifier High Register
+#define TXB1_DATA_C  0x43  
+#define TXB2_ID_C  0x44  // Standard Identifier High Register
 #define TXB2_DATA_C  0x45 
 
 
@@ -121,29 +121,12 @@ void can_send(uint8_t id, uint8_t data, uint8_t len){
   SPI_Write(TXB2_DATA_C, data+1);
 
   PORTB &=~(1<<PB2);
-  SPI_transfer(RTS_TXB0);
+  SPI_transfer(RTS_TXB0); //tutaj wysyla txb0
   PORTB |=(1<<PB2);
 }
 
-uint8_t can_receive(uint8_t *data, uint8_t *len) {
-    uint8_t status = 0;
-
-    // Sprawdź flagę RXnIF w CANINTF (np. RXB0IF dla bufora RXB0)
-    SPI_read(0x2C, &status, 1); // CANINTF
-    if (status & 0x01) {        // Sprawdź RXB0IF
-        // Odczytaj długość danych
-        SPI_read(0x65, len, 1); // RXBnDLC
-
-        // Odczytaj dane
-        for (uint8_t i = 0; i < *len; i++) {
-            SPI_read(0x66 + i, &data[i], 1); // RXBnD0 do RXBnD7
-        }
-
-        // Wyczyść flagę RXB0IF
-        SPI_write(0x2C, 0x00); // Wyczyszczenie CANINTF
-        return 1; // Wiadomość odebrana
-    }
-    return 0; // Brak wiadomości
+void can_receive(uint8_t *data, uint8_t *len) {
+    
 }
 
 int main(){
