@@ -7,6 +7,17 @@
 #define CNF2 0x29
 #define CNF3 0x28
 #define RXB0CNTRL 0x60
+#define TXBxCTRL 0x30
+#define RTS_TXB0 0x81
+#define RTS_TXB1 0x82
+#define RTS_TXB2 0x84
+#define TXB0_ID_C  0x40  // Buffer 0 - Standard Identifier High Register
+#define TXB0_DATA_C  0x41  // Buffer 0 - Data Byte Register
+#define TXB1_ID_C  0x42  // Buffer 1 - Standard Identifier High Register
+#define TXB1_DATA_C  0x43  // Buffer 1 - Data Byte Register
+#define TXB2_ID_C  0x44  // Buffer 2 - Standard Identifier High Register
+#define TXB2_DATA_C  0x45 
+
 
 void spi_arduino_init()
 {
@@ -101,19 +112,17 @@ void can_init(){
   PORTB |=(1<<PB2);
 }
 
-void can_send(uint8_t id, uint8_t *data, uint8_t len){
-  SPI_write(0x31, (id>>3)); //SIDH
-  SPI_write(0x32, (id<<5));
+void can_send(uint8_t id, uint8_t data, uint8_t len){
+  SPI_Write(TXB0_ID_C, id);
+  SPI_Write(TXB0_DATA_C, data);
+  SPI_Write(TXB1_ID_C, id);
+  SPI_Write(TXB1_DATA_C, data+1);
+  SPI_Write(TXB2_ID_C, id);
+  SPI_Write(TXB2_DATA_C, data+1);
 
-  for (uint8_t i = 0; i < len; i++) {
-        SPI_write(0x36 + i, data[i]); // Rejestry TXBnD0 do TXBnD7
-    }
-
-    // Ustaw długość danych
-    SPI_write(0x35, len); // Rejestr TXBnDLC
-
-    // Zainicjuj transmisję
-    SPI_write(0x30, 0x08); // TXREQ - Rozpocznij nadawanie
+  PORTB &=~(1<<PB2);
+  SPI_transfer(RTS_TXB0);
+  PORTB |=(1<<PB2);
 }
 
 uint8_t can_receive(uint8_t *data, uint8_t *len) {
@@ -143,7 +152,7 @@ uint8_t arr=4;
 spi_arduino_init();
 can_init();
 while(1){
-  can_send(0x123, arr, 1);
+  can_send(0x12, arr, 1);
   _delay_ms(10000);
   
 }
