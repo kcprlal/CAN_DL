@@ -15,3 +15,5 @@
 ## Tydzień 4:
 - Pmody zostały zainicjalizowane i gotowe do działania
 - Niestetety napotkaliśmy problemy z wgrywaniem programów do mikrokontrolera Leonarda ;(
+## Tydzień 5:
+- Dodana została możliwość przesyłu i odobioru informacji przez CAN na razie bez przerwań
