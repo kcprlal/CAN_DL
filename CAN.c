@@ -110,7 +110,7 @@ void can_init(){
   SPI_write(CNF1, 0x41); 
   SPI_write(CNF2, 0xFB);
   SPI_write(CNF3, 0x86);
-  SPI_wrtie(RXBxSIDH, 0xAA); //ustaw id receive buffera
+  SPI_write(RXBxSIDH, 0xAA); //ustaw id receive buffera
   can_standard();
   SPI_write(RXB0CNTRL, 0x64);
   SPI_write(CANCTRL, 0x00);
