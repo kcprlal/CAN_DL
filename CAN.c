@@ -3,6 +3,7 @@
 #include<util/delay.h>
 
 #define CANCTRL 0x0f
+#define CANINTF 0x2c
 #define CNF1 0x2A
 #define CNF2 0x29
 #define CNF3 0x28
@@ -11,14 +12,17 @@
 #define RTS_TXB0 0x81
 #define RTS_TXB1 0x82
 #define RTS_TXB2 0x84
-#define TXB0_ID_C  0x40  // Standard Identifier High Register
-#define TXB0_DATA_C  0x41 
-#define TXB1_ID_C  0x42  // Standard Identifier High Register
-#define TXB1_DATA_C  0x43  
-#define TXB2_ID_C  0x44  // Standard Identifier High Register
-#define TXB2_DATA_C  0x45 
-
-
+#define TXB0_SIDH  0x40  // Standard Identifier High Register
+#define TXB0_DATA  0x41 
+#define TXB1_SIDH  0x42  // Standard Identifier High Register
+#define TXB1_DATA  0x43  
+#define TXB2_SIDH  0x44  // Standard Identifier High Register
+#define TXB2_DATA  0x45 
+#define RXB0DLC 0x65
+#define RXB1DLC 0x75
+#define RXBxSIDH 0x61
+#define RXB0xDn 0x66 //receive buffer moze byc od 0x66 do 0x6D
+#define RXB1xDn 0x76 // od 0x76 do 0x76
 void spi_arduino_init()
 {
   //SPI CHIP SELECT
@@ -106,6 +110,7 @@ void can_init(){
   SPI_write(CNF1, 0x41); 
   SPI_write(CNF2, 0xFB);
   SPI_write(CNF3, 0x86);
+  SPI_wrtie(RXBxSIDH, 0xAA); //ustaw id receive buffera
   can_standard();
   SPI_write(RXB0CNTRL, 0x64);
   SPI_write(CANCTRL, 0x00);
@@ -113,20 +118,22 @@ void can_init(){
 }
 
 void can_send(uint8_t id, uint8_t data, uint8_t len){
-  SPI_Write(TXB0_ID_C, id);
-  SPI_Write(TXB0_DATA_C, data);
-  SPI_Write(TXB1_ID_C, id);
-  SPI_Write(TXB1_DATA_C, data+1);
-  SPI_Write(TXB2_ID_C, id);
-  SPI_Write(TXB2_DATA_C, data+1);
+  SPI_write(TXB0_SIDH, id);
+  SPI_write(TXB0_DATA, data);
+  SPI_write(TXB1_SIDH, id);
+  SPI_write(TXB1_DATA, data+1);
+  SPI_write(TXB2_SIDH, id);
+  SPI_write(TXB2_DATA, data+1);
 
   PORTB &=~(1<<PB2);
   SPI_transfer(RTS_TXB0); //tutaj wysyla txb0
   PORTB |=(1<<PB2);
 }
 
-void can_receive(uint8_t *data, uint8_t *len) {
-    
+void can_receive(uint8_t *data) {
+    uint8_t len = 1; // na razie 1 zeby zobaczyc czy dziala
+    SPI_read(RXB0xDn, data, len);
+    SPI_write(CANINTF, 0); //tutaj trzeba bedzie cos zmienic bo resetuje wszystkie flagi a chcemy tylko 1 i 2gi bit
 }
 
 int main(){
