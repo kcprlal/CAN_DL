@@ -16,4 +16,6 @@
 - Pmody zostały zainicjalizowane i gotowe do działania
 - Niestetety napotkaliśmy problemy z wgrywaniem programów do mikrokontrolera Leonarda ;(
 ## Tydzień 5:
-- Dodana została możliwość przesyłu i odobioru informacji przez CAN na razie bez przerwań
+- Zastąpiliśmy płytkę arduino Leonardo mikrokontrolerem ATMega328PB
+- Napisaliśmy skrypty dotyczące spi oraz can dla mikrokontrolera, analogicznie do tych dla arduino Leonardo
+- Nie udało się przesłać i odczytać informacji między płytkami, planujemy zlokalizować błąd przy pomocy oscyloskopu
