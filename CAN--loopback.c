@@ -12,17 +12,29 @@
 #define RTS_TXB0 0x81
 #define RTS_TXB1 0x82
 #define RTS_TXB2 0x84
-#define TXB0_SIDH  0x40  // Standard Identifier High Register
-#define TXB0_DATA  0x41 
-#define TXB1_SIDH  0x42  // Standard Identifier High Register
-#define TXB1_DATA  0x43  
-#define TXB2_SIDH  0x44  // Standard Identifier High Register
-#define TXB2_DATA  0x45 
+#define TXB0_SIDH 0x31 // Standard Identifier High Register
+#define TXB0_SIDL 0x32
+#define TXB0_DATA 0x36
+#define TXB1_SIDH 0x41// Standard Identifier High Register
+#define TXB1_SIDL 0x42
+#define TXB1_DATA 0x46
+#define TXB2_SIDH 0x51  // Standard Identifier High Register
+#define TXB2_SIDL 0x52
+#define TXB2_DATA 0x56
 #define RXB0DLC 0x65
 #define RXB1DLC 0x75
-#define RXBxSIDH 0x61
+#define RXB0xSIDH 0x61
 #define RXB0xDn 0x66 //receive buffer moze byc od 0x66 do 0x6D
+#define RXB1xSIDH 0x71
 #define RXB1xDn 0x76 // od 0x76 do 0x76
+#define TXB0DLC 0x35
+#define TXB1DLC 0x45
+#define TXB2DLC 0x55
+#define RXM0xSIDH 0x20
+#define RXM0xSIDL 0x21
+#define RXM1xSIDH 0x24
+#define RXM1xSIDL 0x25
+
 void spi_arduino_init()
 {
   //SPI CHIP SELECT
@@ -72,12 +84,10 @@ void SPI_read(uint8_t reg, uint8_t *reg_data, uint8_t len){
   PORTB &=~(1<<PB2);
   SPI_transfer(0x03);
   SPI_transfer(reg);
-
 		while(len--)
 		{
-			 *(uint8_t*)reg_data = SPI_transfer(0x00); // Cast to uint8_t*
-        reg_data = (uint8_t*)reg_data + 1;        // Increment as uint8_t*
-        _delay_ms(10);
+			 *reg_data = SPI_transfer(0x00); // wysylamy cokolwiek zeby rejestr sie przesunal
+      reg_data = reg_data + 1;        // Increment as uint8_t*
 		}
 
   PORTB |=(1<<PB2);
@@ -107,23 +117,29 @@ void can_standard(){
 void can_init(){
   PORTB &= ~(1 << PB2);
   SPI_write(CANCTRL, 0x80);
-  SPI_write(CNF1, 0x41); 
-  SPI_write(CNF2, 0xFB);
-  SPI_write(CNF3, 0x86);
-  SPI_write(RXBxSIDH, 0xAA); //ustaw id receive buffera
-  can_standard();
+  SPI_write(CNF1, 0x00);     // BRP = 0, SJW = 1 TQ
+SPI_write(CNF2, 0xB3);     // PROPSEG = 7 TQ, PHSEG1 = 4 TQ, BTLMODE = 1
+SPI_write(CNF3, 0x03);
+  SPI_write(RXB0xSIDH, 0x12); //ustaw id receive buffera
+  SPI_write(RXB1xSIDH, 0x12);
+  //can_standard();
   SPI_write(RXB0CNTRL, 0x64);
-  SPI_write(CANCTRL, 0x00);
+  //SPI_write(CANCTRL, 0x00);
+  SPI_write(CANCTRL, 0b01000000); // loopback
+  SPI_write(CANINTF, 0);
   PORTB |=(1<<PB2);
 }
 
 void can_send(uint8_t id, uint8_t data, uint8_t len){
+  SPI_write(TXBxCTRL, 0);
   SPI_write(TXB0_SIDH, id);
+  SPI_write(TXB0_SIDL, 0);
   SPI_write(TXB0_DATA, data);
-  SPI_write(TXB1_SIDH, id);
-  SPI_write(TXB1_DATA, data+1);
-  SPI_write(TXB2_SIDH, id);
-  SPI_write(TXB2_DATA, data+1);
+  SPI_write(TXB0DLC, len & 0x0f);
+  // SPI_write(TXB1_SIDH, id);
+  // SPI_write(TXB1_DATA, data+1);
+  // SPI_write(TXB2_SIDH, id);
+  // SPI_write(TXB2_DATA, data+1);
 
   PORTB &=~(1<<PB2);
   SPI_transfer(RTS_TXB0); //tutaj wysyla txb0
@@ -137,16 +153,22 @@ void can_receive(uint8_t *data) {
 }
 
 int main(){
+DDRD = 0xFF;                // Ustaw port D jako wyjściowy
+    uint8_t data = 0x00;        // Bufor na odebrane dane
 
-uint8_t arr=4;
-spi_arduino_init();
-can_init();
-while(1){
-  can_send(0x12, arr, 1);
-  _delay_ms(10000);
-  
-}
+    spi_arduino_init();         // Inicjalizacja SPI
+    can_init();                 // Inicjalizacja kontrolera CAN
 
+    can_send(0x12, 0xff, 1);    // Wyślij wiadomość ID=0x12, Data=0xAA, Len=1
 
-  return 0;
+    _delay_ms(10);              // Krótkie opóźnienie na przetwarzanie
+
+    uint8_t canintf;
+    SPI_read(CANINTF, &canintf, 1); // Sprawdzenie flagi przerwań
+    if (canintf & 0x01) {           // Jeśli RX0IF ustawione
+        can_receive(&data);         // Odbierz wiadomość
+    }
+
+    PORTD = data;                  // Wyświetl odebrane dane na PORTD
+    return 0;
 }
