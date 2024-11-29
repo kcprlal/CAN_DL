@@ -39,10 +39,12 @@
 #define TXB2_DATA 0x56
 #define RXB0CNTRL 0x60
 #define RXB0xSIDH 0x61
+#define RXB0xSIDL 0x62
 #define RXB0DLC 0x65
 #define RXB0xDn 0x66 // Receive buffer może być od 0x66 do 0x6D
 #define RXB1CTRL 0x70
 #define RXB1xSIDH 0x71
+#define RXB1xSIDL 0x72
 #define RXB1DLC 0x75
 #define RXB1xDn 0x76 // Receive buffer może być od 0x76 do 0x76
 #define RTS_TXB0 0x81
@@ -107,7 +109,7 @@ void SPI_read(uint8_t reg, uint8_t *reg_data, uint8_t len){
   PORTB |=(1<<PB2);
 }
 
-SPI_modify(uint8_t reg, uint8_t value, uint8_t mask){
+void SPI_modify(uint8_t reg, uint8_t value, uint8_t mask){
   PORTB &=~(1<<PB2);
   SPI_transfer(0x05);
   SPI_transfer(reg);
@@ -146,9 +148,16 @@ void can_init(){
   //jezeli ustawie konkretne id to pomimo filtra i maski przyjmie tylko
   //wiadomosci z ponizszymi id
   SPI_write(RXB0xSIDH, 0xaa); //ustaw id receive buffera
+  SPI_write(RXB0xSIDL, 0x00);
   SPI_write(RXB1xSIDH, 0x12);
+  SPI_write(RXB1xSIDL, 0x00);
   //can_standard();
-  SPI_write(RXB0CNTRL, 0x64);
+  //jezeli chcemy zrobic rollover z rejestrow BUKT (2bit musi byc ustawiony na 1)
+  //pozwala to po przepelnieniu rxb0 wpisac do rxb1
+  //filtr z rxb0 zostanie zastosowany w rxb1(chyba ale tak na 90%)
+  //SPI_write(RXB0CNTRL, 0x64);//przyjmuje wszystkie wiadomosci
+  SPI_write(RXB0CNTRL, 0x04);//filtry dzialaja
+  SPI_write(RXB1CTRL, 0x04);//filtry dzialaja
   SPI_write(CANCTRL, 0x00);//normal
   //SPI_write(CANCTRL, 0b01000000); // loopback
   SPI_write(CANINTF, 0);
@@ -191,21 +200,29 @@ void can_send2(uint8_t id, uint8_t data, uint8_t len){
 //domyslny bufor
 void can_receive0(uint8_t *data, uint8_t len) {
     SPI_read(RXB0xDn, data, len);
-    SPI_modify(CANINTF, 0, 0x01) //tutaj trzeba bedzie cos zmienic bo resetuje wszystkie flagi a chcemy tylko 1 i 2gi bit
+    SPI_modify(CANINTF, 0, 0x01); 
 }
 
 void can_receive1(uint8_t *data, uint8_t len) {
     SPI_read(RXB1xDn, data, len);
-    SPI_write(CANINTF, 0x02); //tutaj trzeba bedzie cos zmienic bo resetuje wszystkie flagi a chcemy tylko 1 i 2gi bit
+    SPI_modify(CANINTF, 0, 0x02); 
 }
 //funkcje dla identyfikatorow 8 bitowych, do dzialania programu na labie wystarczy
 //ustaw 1 dla bitow znaczacych
 void can_mask_set(uint8_t sidh){
+  SPI_write(CANCTRL, 0x80);
   SPI_write(RXM0xSIDH, sidh);
+  SPI_write(RXM0xSIDL, 0x00);
+  SPI_write(CANCTRL, 0x00);
 }
 //ustawia filtr i jest on traktowany zgodnie z maska
 void can_filter_set(uint8_t sidh){
+  SPI_write(CANCTRL, 0x80);
   SPI_write(RXFxSIDH0, sidh); //domyslnie ustawiony w can int
+  SPI_write(RXFxSIDL0, 0x00);
+  SPI_write(RXFxSIDH1, sidh); //domyslnie ustawiony w can int
+  SPI_write(RXFxSIDL1, 0x00);
+  SPI_write(CANCTRL, 0x00);
 }
 
 int main(){
@@ -215,9 +232,13 @@ DDRD &=~(1<<PD0);
     can_init();                 // Inicjalizacja kontrolera CAN
 uint8_t data = 0;
   while(1){
-    can_send1(0x12, data, 1);    // Wyślij wiadomość ID=0x12, Data=0xAA, Len=1
-    _delay_ms(5000); 
-    data++;  
+    can_send0(0x12, data, 1);    // Wyślij wiadomość ID=0x12, Data=0xAA, Len=1
+    _delay_ms(2000); 
+    data++;
+    can_send0(0x12, 0xff, 1);
+    _delay_ms(2000);
+    can_send0(0x88, 0xaa, 1);
+    _delay_ms(2000);
   }
 
     /*uint8_t canintf;
