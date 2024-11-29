@@ -1,5 +1,6 @@
 # CAN_DL
 ##GIGA WAŻNE: 
+
   przy pdołaczonych w urządzeniach tylko 1 powinno mieć złączke jp1, a kiedy są połączone conajmniej 3 tylko te zewnętrzne
   powinny mieć podłączone jp1
 ## Tydzień 1:
