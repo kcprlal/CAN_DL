@@ -1,4 +1,7 @@
 # CAN_DL
+##GIGA WAŻNE: 
+  przy pdołaczonych w urządzeniach tylko 1 powinno mieć złączke jp1, a kiedy są połączone conajmniej 3 tylko te zewnętrzne \n
+  powinny mieć podłączone jp1
 ## Tydzień 1:
   - zmontowaliśmy ekipe do wykonania zadania
   - zebraliśmy elementy potrzebne do komunikacji przez magistarlę CAN  
