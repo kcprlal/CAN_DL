@@ -22,3 +22,7 @@
 - Zastąpiliśmy płytkę arduino Leonardo mikrokontrolerem ATMega328PB
 - Napisaliśmy skrypty dotyczące spi oraz can dla mikrokontrolera, analogicznie do tych dla arduino Leonardo
 - Nie udało się przesłać i odczytać informacji między płytkami, planujemy zlokalizować błąd przy pomocy oscyloskopu
+## Tydzień 6(7?):
+- Udało się wysłać wiadomość przez CAN
+- Stworzony został chat między dwoma komputerami
+- Przeprowadzane są testy prędkości i dokładności przesyłu
