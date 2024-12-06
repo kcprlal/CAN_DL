@@ -24,5 +24,6 @@
 - Nie udało się przesłać i odczytać informacji między płytkami, planujemy zlokalizować błąd przy pomocy oscyloskopu
 ## Tydzień 6(7?):
 - Udało się wysłać wiadomość przez CAN
+- Dodane zostały maski oraz filtry ID dla odbieranych wiadomości
 - Stworzony został chat między dwoma komputerami
 - Przeprowadzane są testy prędkości i dokładności przesyłu
