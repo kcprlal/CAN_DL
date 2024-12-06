@@ -1,4 +1,4 @@
-//po lewej
+//po prawej
 #include<stdlib.h>
 #include<avr/io.h>
 #include<util/delay.h>
@@ -224,29 +224,51 @@ void can_filter_set(uint8_t sidh){
   SPI_write(RXFxSIDL1, 0x00);
   SPI_write(CANCTRL, 0x00);
 }
+//TUTAJ JEST OPCJA CHATU PRZEZ CAN
 
-int main(){
-DDRD &=~(1<<PD0);
-
+void setup(){
+  Serial.begin(9600);
     spi_arduino_init();         // Inicjalizacja SPI
     can_init();                 // Inicjalizacja kontrolera CAN
-uint8_t data = 0;
-  while(1){
-    can_send0(0x12, data, 1);    // Wyślij wiadomość ID=0x12, Data=0xAA, Len=1
-    _delay_ms(2000); 
-    data++;
-    can_send0(0x12, 0xff, 1);
-    _delay_ms(2000);
-    can_send0(0x88, 0xaa, 1);
-    _delay_ms(2000);
+    can_mask_set(0xff);
+    can_filter_set(0x12);
+    _delay_ms(10);
+}
+uint8_t canintf; 
+char data;
+void loop(){
+  
+  if (Serial.available() > 0) {
+    // Odczytaj jeden znak
+    char receivedChar = Serial.read();
+    can_send0(0xaa, receivedChar, 1);    // Wyślij wiadomość ID=0x12, Data=0xAA, Len=1
+    Serial.print(receivedChar);
   }
-
-    /*uint8_t canintf;
     SPI_read(CANINTF, &canintf, 1); // Sprawdzenie flagi przerwań
     if (canintf & 0x01) {           // Jeśli RX0IF ustawione
-        can_receive(&data, 1);         // Odbierz wiadomość
+        can_receive0(&data, 1);         // Odbierz wiadomość
+        Serial.print(data);
     }
-
-    PORTD = data; */                 // Wyświetl odebrane dane na PORTD
-    return 0;
 }
+
+//TUTAJ KOMUNIKACJA BEZ TERMINALA
+/*
+int main(){
+    //DDRD = 0xFF;                // Ustaw port D jako wyjściowy
+    char data;        // Bufor na odebrane dane
+    spi_arduino_init();         // Inicjalizacja SPI
+    can_init();                 // Inicjalizacja kontrolera CAN
+    can_mask_set(0xff);
+    can_filter_set(0x12);
+    
+    _delay_ms(10);              // Krótkie opóźnienie na przetwarzanie
+    //uint8_t canintf;
+while(1){
+    uint8_t canintf;
+    SPI_read(CANINTF, &canintf, 1); // Sprawdzenie flagi przerwań
+    if (canintf & 0x01) {           // Jeśli RX0IF ustawione
+        can_receive0(&data, 1);         // Odbierz wiadomość
+    }
+    }
+    return 0;
+}*/
